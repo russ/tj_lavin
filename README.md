@@ -36,8 +36,6 @@ Worker file:
 
 ```
 class BMXWorker < TJLavin::QueuedJob
-  param encoding_task_id : UUID
-
   def perform
     puts "Keep on peddalin'"
   end
