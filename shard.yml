@@ -1,0 +1,12 @@
+name: tj_lavin
+version: 0.1.0
+
+authors:
+  - Russell Smith <russ@bashme.org>
+
+description: |
+  A small wrapper around LavingMQ for job management.
+
+dependencies:
+  amqp-client:
+    github: cloudamqp/amqp-client.cr
