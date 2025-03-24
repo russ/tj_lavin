@@ -108,7 +108,7 @@ module TJLavin
       end
     end
 
-    def enqueue(routing_key : String) : JobRun
+    def enqueue(routing_key : String, priority : Int32 = 0) : JobRun
       build_job_run.tap do |job_run|
         hash_to_array = ->(hash : Hash(String, String)) : Array(String) {
           array = [] of String
@@ -123,12 +123,13 @@ module TJLavin
 
         AMQP::Client.start(TJLavin.configuration.amqp_url.to_s) do |c|
           c.channel do |ch|
-            q = ch.queue(routing_key)
+            q = ch.queue(routing_key, args: AMQP::Client::Arguments.new({"x-max-priority": 255}))
             q.publish(
               {
                 class: job_run.type,
                 args:  hash_to_array.call(job_run.config),
               }.to_json,
+              props: AMQ::Protocol::Properties.new(priority: priority.to_u8),
             )
           end
         end

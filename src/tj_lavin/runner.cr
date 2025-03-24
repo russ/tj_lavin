@@ -15,7 +15,7 @@ module TJLavin
 
       AMQP::Client.start(TJLavin.configuration.amqp_url.to_s) do |c|
         c.channel do |ch|
-          q = ch.queue(routing_key)
+          q = ch.queue(routing_key, args: AMQP::Client::Arguments.new({"x-max-priority": 255}))
           ch.prefetch(count: 1)
 
           puts "Waiting for tasks. To exit press CTRL+C"
@@ -36,6 +36,8 @@ module TJLavin
             end
 
             Log.notice { "Done" }
+          rescue e
+            pp! e
           end
         end
       end
