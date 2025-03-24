@@ -7,7 +7,6 @@ module TJLavin
 
   class Configuration
     property amqp_url : String?
-    property cluster_name : String?
     property topic_name : String = "topicname"
     property validated = false
 
