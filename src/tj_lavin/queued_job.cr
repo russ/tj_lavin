@@ -142,7 +142,7 @@ module TJLavin
 
             props = AMQ::Protocol::Properties.new(
               priority: priority.to_u8,
-              headers: delay > 0 ? AMQ::Protocol::Table.new({"x-delay" => delay_ms}) : AMQ::Protocol::Table.new
+              headers: delay > 0 ? AMQ::Protocol::Table.new({"x-delay" => delay}) : AMQ::Protocol::Table.new
             )
 
             ch.basic_publish(
