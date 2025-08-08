@@ -11,15 +11,13 @@ module TJLavin
     getter exception : Exception?
 
     def run
-      begin
-        perform
-      rescue e
-        Log.warn(exception: e) do
-          "Job failed! Raised #{e.class}: #{e.message}"
-        end
-
-        @exception = e
+      perform
+    rescue e
+      Log.warn(exception: e) do
+        "Job failed! Raised #{e.class}: #{e.message}"
       end
+
+      @exception = e
     end
 
     def perform

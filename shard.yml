@@ -10,3 +10,8 @@ description: |
 dependencies:
   amqp-client:
     github: cloudamqp/amqp-client.cr
+
+development_dependencies:
+  ameba:
+    github: crystal-ameba/ameba
+    version: ~> 1.5.0

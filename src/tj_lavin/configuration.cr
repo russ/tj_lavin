@@ -1,18 +1,18 @@
 module TJLavin
   class_getter configuration = Configuration.new
 
-  def self.configure(&block) : Nil
+  def self.configure(&) : Nil
     yield configuration
   end
 
   class Configuration
     property amqp_url : String?
-    property validated = false
     property routing_key : String = "tjlavin"
+    property? validated = false
 
     def validate
-      return if @validated
-      @validated = true
+      return if validated?
+      validated = true
 
       unless [amqp_url].compact_map.empty?
         message = <<-error

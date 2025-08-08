@@ -21,7 +21,7 @@ module TJLavin
           Log.notice { "Waiting for tasks. To exit press CTRL+C" }
 
           q.subscribe(no_ack: false, block: true) do |msg|
-            Log.notice { "Received: #{msg.body_io.to_s}" }
+            Log.notice { "Received: #{msg.body_io}" }
 
             message = JSON.parse(msg.body_io.to_s)
 
@@ -37,7 +37,7 @@ module TJLavin
 
             Log.notice { "Done" }
           rescue e
-            pp! e
+            Log.notice { "Error: #{e.message}".colorize(:red) }
           end
         end
       end
