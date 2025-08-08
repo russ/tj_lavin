@@ -71,7 +71,6 @@ end
 ```crystal
 TJLavin.configure do |settings|
   settings.amqp_url = ENV["AMQP_URL"]
-  settings.topic_name = ENV["AMQP_TOPIC_NAME"].to_s
 end
 ```
 
@@ -79,7 +78,7 @@ end
 
 Start workers with:
 ```crystal
-TJLavin::Runner.start("routing_key")
+TJLavin::Runner.start
 ```
 
 ## Key Integration Points

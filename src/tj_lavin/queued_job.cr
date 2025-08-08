@@ -111,7 +111,7 @@ module TJLavin
     def enqueue(priority : Int32 = 0, delay : Time::Span = 0.seconds) : JobRun
       delay = delay.to_i * 1000                  # Convert seconds to milliseconds for AMQP
       exchange_name = delay > 0 ? "delayed" : "" # Empty string for default exchange
-      routing_key = "workers"
+      routing_key = TJLavin.configuration.routing_key
 
       build_job_run.tap do |job_run|
         hash_to_array = ->(hash : Hash(String, String)) : Array(String) do
