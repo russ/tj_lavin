@@ -38,6 +38,8 @@ Configure TJ Lavin in your application:
 TJLavin.configure do |settings|
   settings.amqp_url = ENV["AMQP_URL"]
   settings.routing_key = ENV["AMQP_ROUTING_KEY"]? # defaults to "tjlavin"
+  settings.default_exchange = ENV["AMQP_DEFAULT_EXCHANGE"]? # defaults to ""
+  settings.delayed_exchange = ENV["AMQP_DELAYED_EXCHANGE"]? # defaults to "tjlavin.delayed"
 end
 ```
 

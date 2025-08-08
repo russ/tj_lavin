@@ -7,6 +7,8 @@ module TJLavin
 
   class Configuration
     property amqp_url : String?
+    property default_exchange : String = "" # Empty string for default exchange
+    property delayed_exchange : String = "tjlavin.delayed"
     property routing_key : String = "tjlavin"
     property? validated = false
 

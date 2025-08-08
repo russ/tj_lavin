@@ -109,8 +109,12 @@ module TJLavin
     end
 
     def enqueue(priority : Int32 = 0, delay : Time::Span = 0.seconds) : JobRun
-      delay = delay.to_i * 1000                  # Convert seconds to milliseconds for AMQP
-      exchange_name = delay > 0 ? "delayed" : "" # Empty string for default exchange
+      delay = delay.to_i * 1000 # Convert seconds to milliseconds for AMQP
+      exchange_name = if delay > 0
+                        TJLavin.configuration.delayed_exchange
+                      else
+                        TJLavin.configuration.default_exchange
+                      end
       routing_key = TJLavin.configuration.routing_key
 
       build_job_run.tap do |job_run|
