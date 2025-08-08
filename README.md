@@ -101,6 +101,33 @@ Then run your worker:
 crystal worker.cr
 ```
 
+## Testing with specs
+
+To test your workers, include a spec helper like this:
+
+```crystal
+module TJLavin
+  abstract class QueuedJob < Job
+    ENQUEUED_JOBS = [] of String
+
+    def enqueue(priority : Int32 = 0, delay : Time::Span = 0.seconds) : JobRun
+      ENQUEUED_JOBS << self.class.name
+      TJLavin::JobRun.new("nothing")
+    end
+  end
+end
+
+Spec.before_each do
+  TJLavin::QueuedJob::ENQUEUED_JOBS.clear
+end
+```
+
+Then check to make sure your job was enqueued:
+
+```crystal
+TJLavin::QueuedJob::ENQUEUED_JOBS.should contain("MyWorker")
+```
+
 ## 📚 Documentation
 
 - **Job Parameters**: Use the `param` macro to define typed parameters for your jobs
