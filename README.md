@@ -65,11 +65,11 @@ Queue up some work:
 # Simple job
 BMXWorker.new(name: "BMX Bandit").enqueue
 
-# High priority job (0-255, higher = more priority)  
+# High priority job (0-255, higher = more priority, default is 0)
 BMXWorker.new(name: "Speed Demon").enqueue(priority: 10)
 
-# Delayed job (delay in milliseconds)
-BMXWorker.new(name: "Future Rider").enqueue(delay: 5_000_i64)
+# Delayed job
+BMXWorker.new(name: "Future Rider").enqueue(delay: 30.seconds)
 ```
 
 ### Running Workers

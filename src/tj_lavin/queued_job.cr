@@ -108,7 +108,8 @@ module TJLavin
       end
     end
 
-    def enqueue(priority : Int32 = 0, delay : Int64 = 0) : JobRun
+    def enqueue(priority : Int32 = 0, delay : Time::Span = 0.seconds) : JobRun
+      delay = delay.to_i * 1000                  # Convert seconds to milliseconds for AMQP
       exchange_name = delay > 0 ? "delayed" : "" # Empty string for default exchange
       routing_key = "workers"
 
@@ -141,7 +142,7 @@ module TJLavin
 
             props = AMQ::Protocol::Properties.new(
               priority: priority.to_u8,
-              headers: delay > 0 ? AMQ::Protocol::Table.new({"x-delay" => delay}) : AMQ::Protocol::Table.new
+              headers: delay > 0 ? AMQ::Protocol::Table.new({"x-delay" => delay_ms}) : AMQ::Protocol::Table.new
             )
 
             ch.basic_publish(
