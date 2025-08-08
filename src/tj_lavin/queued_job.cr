@@ -108,28 +108,47 @@ module TJLavin
       end
     end
 
-    def enqueue(routing_key : String, priority : Int32 = 0) : JobRun
+    def enqueue(priority : Int32 = 0, delay : Int64 = 0) : JobRun
+      exchange_name = delay > 0 ? "delayed" : "" # Empty string for default exchange
+      routing_key = "workers"
+
       build_job_run.tap do |job_run|
-        hash_to_array = ->(hash : Hash(String, String)) : Array(String) {
-          array = [] of String
+        hash_to_array = ->(hash : Hash(String, String)) : Array(String) do
+          hash.flat_map { |k, v| [k, v] }
+        end
 
-          hash.each do |key, value|
-            array << key
-            array << value
-          end
-
-          array
-        }
+        message = {
+          class: job_run.type,
+          args:  hash_to_array.call(job_run.config),
+        }.to_json
 
         AMQP::Client.start(TJLavin.configuration.amqp_url.to_s) do |c|
           c.channel do |ch|
-            q = ch.queue(routing_key, args: AMQP::Client::Arguments.new({"x-max-priority": 255}))
-            q.publish(
-              {
-                class: job_run.type,
-                args:  hash_to_array.call(job_run.config),
-              }.to_json,
-              props: AMQ::Protocol::Properties.new(priority: priority.to_u8),
+            if delay > 0
+              ch.exchange_declare(
+                exchange_name,
+                type: "x-delayed-message",
+                durable: true,
+                args: AMQP::Client::Arguments.new({"x-delayed-type" => "direct"})
+              )
+              ch.queue(routing_key, args: AMQP::Client::Arguments.new({"x-max-priority" => 255}))
+              ch.queue_bind(routing_key, exchange_name, routing_key: routing_key)
+            else
+              ch.queue(routing_key,
+                args: AMQP::Client::Arguments.new({"x-max-priority" => 255})
+              )
+            end
+
+            props = AMQ::Protocol::Properties.new(
+              priority: priority.to_u8,
+              headers: delay > 0 ? AMQ::Protocol::Table.new({"x-delay" => delay}) : AMQ::Protocol::Table.new
+            )
+
+            ch.basic_publish(
+              message,
+              exchange: exchange_name,
+              routing_key: routing_key,
+              props: props
             )
           end
         end

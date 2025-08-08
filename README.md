@@ -1,20 +1,83 @@
-# Lavin MQ
+# TJ Lavin 🚴
 
-An example worker setup file in Lucky/Avram application.
+> *"Keep on peddalin'!"* - A Crystal job queue library for background processing
 
-Configuration:
+TJ Lavin is a lightweight Crystal wrapper around LavinMQ that makes background job processing simple and fun. Named after the legendary BMX rider and Challenge host, it's designed to keep your application pedaling smoothly even under pressure.
 
+## ✨ Features
+
+- 🔥 **Simple Setup** - Get up and running in minutes
+- ⚡ **Priority Queues** - Handle urgent jobs first  
+- ⏰ **Delayed Jobs** - Schedule jobs for future execution
+- 🛡️ **Error Handling** - Robust failure management
+- 🎯 **Type Safety** - Crystal's type system keeps your jobs safe
+- 🔧 **Lucky Integration** - Works seamlessly with Lucky/Avram applications
+
+## 🚀 Quick Start
+
+### Installation
+
+Add this to your `shard.yml`:
+
+```yaml
+dependencies:
+  tj_lavin:
+    github: russ/tj_lavin
 ```
+
+Then run:
+```bash
+shards install
+```
+
+### Configuration
+
+Configure TJ Lavin in your application:
+
+```crystal
 TJLavin.configure do |settings|
   settings.amqp_url = ENV["AMQP_URL"]
-  settings.cluster_name = ENV["WORKER_CLUSTER_NAME"]?
-  settings.topic_name = ENV["AMQP_TOPIC_NAME"].to_s
+  settings.routing_key = ENV["AMQP_ROUTING_KEY"]? # defaults to "tjlavin"
 end
 ```
 
-Worker setup:
+### Creating a Job
 
+Define your background jobs by inheriting from `QueuedJob`:
+
+```crystal
+class BMXWorker < TJLavin::QueuedJob
+  param name : String
+  param skill_level : Int32 = 5
+
+  def perform
+    puts "Keep on peddalin' #{name}! Your skill level is #{skill_level}/10 🚴‍♂️"
+    # Your job logic here
+  end
+end
 ```
+
+### Enqueuing Jobs
+
+Queue up some work:
+
+```crystal
+# Simple job
+BMXWorker.new(name: "BMX Bandit").enqueue
+
+# High priority job (0-255, higher = more priority)  
+BMXWorker.new(name: "Speed Demon").enqueue(priority: 10)
+
+# Delayed job (delay in milliseconds)
+BMXWorker.new(name: "Future Rider").enqueue(delay: 5_000_i64)
+```
+
+### Running Workers
+
+For Lucky/Avram applications, set up your worker process:
+
+```crystal
+# worker.cr
 require "./app"
 
 Habitat.raise_if_missing_settings!
@@ -24,20 +87,37 @@ if LuckyEnv.development?
   Avram::SchemaEnforcer.ensure_correct_column_mappings!
 end
 
-# Disable query cache because all jobs run in the
-# same fiber which means infinite cache
+# Disable query cache for better performance in workers
 Avram.settings.query_cache_enabled = false
 
-# Start the server
-TJLavin::Runner.start("worker_cluster_#{ARGV[0]}")
+# Start processing jobs
+TJLavin::Runner.start
 ```
 
-Worker file:
+Then run your worker:
+```bash
+crystal worker.cr
+```
 
-```
-class BMXWorker < TJLavin::QueuedJob
-  def perform
-    puts "Keep on peddalin'"
-  end
-end
-```
+## 📚 Documentation
+
+- **Job Parameters**: Use the `param` macro to define typed parameters for your jobs
+- **Error Handling**: Failed jobs are automatically rejected and logged
+- **Monitoring**: Built-in logging shows job processing status
+- **Serialization**: Automatic parameter serialization/deserialization
+
+## 🤝 Contributing
+
+1. Fork it
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create a new Pull Request
+
+## 📄 License
+
+MIT License - see LICENSE file for details.
+
+---
+
+*Keep on peddalin'!* 🚴‍♂️

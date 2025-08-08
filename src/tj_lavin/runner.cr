@@ -1,6 +1,6 @@
 module TJLavin
   class Runner
-    def self.start(routing_key : String)
+    def self.start
       Log.notice { "TJ Lavin is pedalin'..." }
 
       array_to_hash = ->(array : Array(String)) : Hash(String, String) {
@@ -15,10 +15,10 @@ module TJLavin
 
       AMQP::Client.start(TJLavin.configuration.amqp_url.to_s) do |c|
         c.channel do |ch|
-          q = ch.queue(routing_key, args: AMQP::Client::Arguments.new({"x-max-priority": 255}))
+          q = ch.queue(TJLavin.configuration.routing_key, args: AMQP::Client::Arguments.new({"x-max-priority": 255}))
           ch.prefetch(count: 1)
 
-          puts "Waiting for tasks. To exit press CTRL+C"
+          Log.notice { "Waiting for tasks. To exit press CTRL+C" }
 
           q.subscribe(no_ack: false, block: true) do |msg|
             Log.notice { "Received: #{msg.body_io.to_s}" }

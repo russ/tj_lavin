@@ -7,14 +7,14 @@ module TJLavin
 
   class Configuration
     property amqp_url : String?
-    property topic_name : String = "topicname"
     property validated = false
+    property routing_key : String = "tjlavin"
 
     def validate
       return if @validated
       @validated = true
 
-      unless [amqp_url, topic_name].compact_map.empty?
+      unless [amqp_url].compact_map.empty?
         message = <<-error
         TJLavin cannot start because the amqp connection string hasn't been provided.
 
@@ -22,7 +22,7 @@ module TJLavin
 
         TJLavin.configure do |settings|
           settings.amqp_url = (ENV["AMQP_TLS_URL"]? || ENV["AMQP_URL"]? || "amqps://guest:guest@localhost")
-          settings.topic_name = (ENV["AMQP_TOPIC_NAME"]? || "hello")
+          settings.routing_key = ENV["AMQP_ROUTING_KEY"]? # default is "tjlavin"
         end
 
         error
