@@ -2,7 +2,7 @@
 
 > *"Keep on peddalin'!"* - A Crystal job queue library for background processing
 
-TJ Lavin is a lightweight Crystal wrapper around LavinMQ that makes background job processing simple and fun. Named after the legendary BMX rider and Challenge host, it's designed to keep your application pedaling smoothly even under pressure.
+TJ Lavin is a lightweight Crystal wrapper around [LavinMQ](https://lavinmq.com) that makes background job processing simple and fun. Named after the legendary BMX rider and Challenge host, it's designed to keep your application pedaling smoothly even under pressure.
 
 ## ✨ Features
 
