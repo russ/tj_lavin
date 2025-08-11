@@ -5,7 +5,7 @@ module TJLavin
         "{{ @type.id }}"
       end
 
-      TJLavin::Base.register_job_mapping("{{ @type.id }}", {{ @type.id }})
+      TJLavin::Base.register_job_mapping(job_name, {{ @type }})
 
       PARAMETERS = [] of Nil
 
