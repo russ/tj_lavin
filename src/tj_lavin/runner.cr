@@ -38,6 +38,7 @@ module TJLavin
             Log.notice { "Done" }
           rescue e
             Log.notice { "Error: #{e.message}".colorize(:red) }
+            ch.basic_reject(msg.delivery_tag, requeue: false)
           end
         end
       end
