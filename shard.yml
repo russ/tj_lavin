@@ -5,7 +5,9 @@ authors:
   - Russell Smith <russ@bashme.org>
 
 description: |
-  A small wrapper around LavingMQ for job management.
+  Type-Safe Crystal Job Queue with Priority & Delayed Execution
+
+crystal: 1.17.0
 
 dependencies:
   amqp-client:
