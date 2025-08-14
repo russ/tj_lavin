@@ -3,7 +3,7 @@ module MyWorkerHelper
     param name : String
 
     def perform
-      puts "Performing MyWorker with name: #{name}"
+      "Performing MyWorker with name: #{name}"
     end
   end
 end
