@@ -1,3 +1,5 @@
+require "json"
+require "amqp-client"
 require "./tj_lavin/*"
 
 module TJLavin

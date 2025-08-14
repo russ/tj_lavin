@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  format:
+    name: Format check
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    container: 84codes/crystal:latest-ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: crystal tool format --check
+  
+  lint:
+    name: Lint check
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    container: 84codes/crystal:latest-ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - run: shards install
+      - run: ./bin/ameba src/ spec/
+  
+  spec:
+    name: Spec
+    runs-on: ubuntu-latest
+    container: 84codes/crystal:latest-ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      amqp:
+        image: cloudamqp/lavinmq
+        ports:
+          - 5672:5672
+    steps:
+      - name: Print Crystal version
+        run: crystal -v
+  
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: shards install
+      - name: Spec
+        env:
+          AMQP_URL: amqp://guest:guest@amqp:5672
+        run: crystal spec --order random --verbose -Dpreview_mt -Dexecution_context
