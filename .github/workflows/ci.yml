@@ -44,7 +44,9 @@ jobs:
   
       - name: Checkout
         uses: actions/checkout@v4
-  
+
+      - name: Install dependencies
+        run: shards install
       - name: Spec
         env:
           AMQP_URL: amqp://guest:guest@amqp:5672
