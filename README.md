@@ -1,6 +1,8 @@
-# TJ Lavin 🚴
-
 [![CI](https://github.com/russ/tj_lavin/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/russ/tj_lavin/actions/workflows/ci.yml)
+[![GitHub release](https://img.shields.io/github/v/release/russ/tj_lavin)](https://github.com/russs/tj_lavin/releases)
+[![GitHub](https://img.shields.io/github/license/russ/tj_lavin)](https://github.com/russ/tj_lavin/blob/master/LICENSE)
+
+# TJ Lavin 🚴
 
 > *"Keep on peddalin'!"* - A Crystal job queue library for background processing
 
@@ -147,7 +149,7 @@ TJLavin::QueuedJob::ENQUEUED_JOBS.should contain("MyWorker")
 
 ## 📄 License
 
-MIT License - see LICENSE file for details.
+Apache License 2.0 - see LICENSE file for details.
 
 ---
 
