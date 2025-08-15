@@ -50,4 +50,4 @@ jobs:
       - name: Spec
         env:
           AMQP_URL: amqp://guest:guest@amqp:5672
-        run: crystal spec --order random --verbose -Dpreview_mt -Dexecution_context
+        run: make test
