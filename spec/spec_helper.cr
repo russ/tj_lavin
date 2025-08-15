@@ -9,5 +9,5 @@ require "../src/tj_lavin"
 require "./support/*"
 
 TJLavin.configure do |settings|
-  settings.amqp_url = ENV["AMQP_URL"]
+  settings.amqp_url = ENV["AMQP_URL"]? || "amqp://guest:guest@localhost:5672"
 end
