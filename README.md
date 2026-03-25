@@ -11,7 +11,8 @@ TJ Lavin is a lightweight Crystal wrapper around [LavinMQ](https://lavinmq.com) 
 ## ✨ Features
 
 - 🔥 **Simple Setup** - Get up and running in minutes
-- ⚡ **Priority Queues** - Handle urgent jobs first  
+- ⚡ **Priority Queues** - Handle urgent jobs first
+- 📋 **Named Queues** - Route jobs to dedicated worker pools
 - ⏰ **Delayed Jobs** - Schedule jobs for future execution
 - 🛡️ **Error Handling** - Robust failure management
 - 🎯 **Type Safety** - Crystal's type system keeps your jobs safe
@@ -78,7 +79,55 @@ BMXWorker.new(name: "Speed Demon").enqueue(priority: 10)
 BMXWorker.new(name: "Future Rider").enqueue(delay: 30.seconds)
 ```
 
+### Named Queues
+
+By default, all jobs use the `"tjlavin"` queue. You can assign jobs to specific queues using the `queue` macro:
+
+```crystal
+class SendEmailWorker < TJLavin::QueuedJob
+  # No queue declaration — uses the default "tjlavin" queue
+  param user_id : UUID
+
+  def perform
+    # ...
+  end
+end
+
+class MigrateGifMediaWorker < TJLavin::QueuedJob
+  queue "media_processing"
+
+  param media_id : UUID
+
+  def perform
+    # ...
+  end
+end
+```
+
+Enqueuing works the same way — the job already knows its queue:
+
+```crystal
+SendEmailWorker.new(user_id: user.id).enqueue
+MigrateGifMediaWorker.new(media_id: media.id).enqueue(priority: 100)
+```
+
 ### Running Workers
+
+You can control which queues a worker process consumes from:
+
+```crystal
+# Consume from ALL registered queues (default)
+TJLavin::Runner.start
+
+# Consume only from the default queue (e.g., web server workers)
+TJLavin::Runner.start(queues: ["tjlavin"])
+
+# Consume only media processing jobs (e.g., dedicated media workers)
+TJLavin::Runner.start(queues: ["media_processing"])
+
+# Consume from multiple specific queues
+TJLavin::Runner.start(queues: ["tjlavin", "media_processing"])
+```
 
 For Lucky/Avram applications, set up your worker process:
 
