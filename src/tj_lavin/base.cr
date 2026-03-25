@@ -1,9 +1,14 @@
 module TJLavin
   class Base
     class_getter mapping = {} of String => Job.class
+    class_getter queues = Set(String).new
 
     def self.register_job_mapping(string, klass)
       @@mapping[string] = klass
+    end
+
+    def self.register_queue(name : String)
+      @@queues << name
     end
 
     def self.job_for_type(type : String) : Job.class

@@ -5,6 +5,16 @@ module TJLavin
         "{{ @type.id }}"
       end
 
+      QUEUE_NAME = [] of Nil
+
+      macro queue(name)
+        {% verbatim do %}
+          {%
+            QUEUE_NAME << name
+          %}
+        {% end %}
+      end
+
       TJLavin::Base.register_job_mapping(job_name, {{ @type }})
 
       PARAMETERS = [] of Nil
@@ -104,6 +114,16 @@ module TJLavin
               job_run
             end
           {% end %}
+
+          def self.queue_name : String
+            {% if QUEUE_NAME.empty? %}
+              TJLavin.configuration.routing_key
+            {% else %}
+              {{ QUEUE_NAME.last }}
+            {% end %}
+          end
+
+          TJLavin::Base.register_queue(queue_name)
         {% end %}
       end
     end
@@ -115,7 +135,7 @@ module TJLavin
                       else
                         TJLavin.configuration.default_exchange
                       end
-      routing_key = TJLavin.configuration.routing_key
+      routing_key = self.class.queue_name
 
       build_job_run.tap do |job_run|
         hash_to_array = ->(hash : Hash(String, String)) : Array(String) do

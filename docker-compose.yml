@@ -4,3 +4,14 @@ services:
     ports:
       - 5672:5672
       - 15672:15672
+
+  app:
+    build: .
+    depends_on:
+      - amqp
+    environment:
+      AMQP_URL: amqp://guest:guest@amqp:5672
+    volumes:
+      - .:/app
+      - /app/lib
+    command: crystal spec --error-trace --order random --verbose -Dpreview_mt -Dexecution_context --

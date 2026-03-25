@@ -1,4 +1,4 @@
-def consume_jobs(*, count : Int32 = 1, timeout : Time::Span = 10.seconds, &block : TJLavin::JobRun -> _)
+def consume_jobs(*, queue : String = TJLavin.configuration.routing_key, count : Int32 = 1, timeout : Time::Span = 10.seconds, &block : TJLavin::JobRun -> _)
   results = Channel(Exception?).new(count)
 
   array_to_hash = ->(array : Array(String)) : Hash(String, String) {
@@ -10,7 +10,7 @@ def consume_jobs(*, count : Int32 = 1, timeout : Time::Span = 10.seconds, &block
   AMQP::Client.start(TJLavin.configuration.amqp_url.to_s) do |c|
     c.channel do |ch|
       q = ch.queue(
-        TJLavin.configuration.routing_key,
+        queue,
         args: AMQP::Client::Arguments.new({"x-max-priority": 255})
       )
       ch.prefetch(count: 1)
