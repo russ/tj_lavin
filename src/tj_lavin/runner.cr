@@ -27,10 +27,10 @@ module TJLavin
 
             q.subscribe(no_ack: false, block: false) do |msg|
               body = msg.body_io.to_s
+              Log.notice { "Received: #{body}" }
+
               message = JSON.parse(body)
               job_class = message["class"].as_s
-
-              Log.notice { "Received: #{body}" }
 
               started_at = Time.monotonic
               job_run = JobRun.new(job_class)
@@ -40,10 +40,14 @@ module TJLavin
 
               if job_instance.exception
                 ch.basic_reject(msg.delivery_tag, requeue: false)
-                Log.notice { {message: "Failed", class: job_class, duration_ms: duration_ms} }
+                Log.with_context(class: job_class, duration_ms: duration_ms) do
+                  Log.notice { "Failed" }
+                end
               else
                 ch.basic_ack(msg.delivery_tag)
-                Log.notice { {message: "Done", class: job_class, duration_ms: duration_ms} }
+                Log.with_context(class: job_class, duration_ms: duration_ms) do
+                  Log.notice { "Done" }
+                end
               end
             rescue e
               Log.notice { "Error: #{e.message}".colorize(:red) }
