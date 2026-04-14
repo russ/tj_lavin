@@ -26,21 +26,25 @@ module TJLavin
             Log.notice { "Subscribing to queue: #{queue_name}" }
 
             q.subscribe(no_ack: false, block: false) do |msg|
-              Log.notice { "Received: #{msg.body_io}" }
+              body = msg.body_io.to_s
+              message = JSON.parse(body)
+              job_class = message["class"].as_s
 
-              message = JSON.parse(msg.body_io.to_s)
+              Log.notice { "Received: #{body}" }
 
-              job_run = JobRun.new(message["class"].as_s)
+              started_at = Time.monotonic
+              job_run = JobRun.new(job_class)
               job_run.config = array_to_hash.call(message["args"].as_a.map(&.as_s))
               job_instance = job_run.run
+              duration_ms = (Time.monotonic - started_at).total_milliseconds.to_i64
 
               if job_instance.exception
                 ch.basic_reject(msg.delivery_tag, requeue: false)
+                Log.notice { {message: "Failed", class: job_class, duration_ms: duration_ms} }
               else
                 ch.basic_ack(msg.delivery_tag)
+                Log.notice { {message: "Done", class: job_class, duration_ms: duration_ms} }
               end
-
-              Log.notice { "Done" }
             rescue e
               Log.notice { "Error: #{e.message}".colorize(:red) }
               ch.basic_reject(msg.delivery_tag, requeue: false)
