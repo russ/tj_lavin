@@ -75,7 +75,9 @@ rescue
 end
 
 private def wait_for_job(channel : ::Channel(String), timeout : Time::Span) : String
-  timer = ::Channel(Nil).new
+  # Buffered so the timer fiber's `send` always completes, even if the job
+  # arrived first and nobody is waiting on the timer branch.
+  timer = ::Channel(Nil).new(1)
   spawn { sleep timeout; timer.send(nil) rescue nil }
 
   select

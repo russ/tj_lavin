@@ -1,11 +1,15 @@
 module TJLavin
   class Runner
-    @@stop_requested = false
+    @@stop_requested = Atomic(UInt8).new(0_u8)
 
     # Signal a running `Runner.start` loop to exit after the current
     # connection cycle completes. Intended for tests and graceful shutdown.
     def self.stop : Nil
-      @@stop_requested = true
+      @@stop_requested.set(1_u8)
+    end
+
+    private def self.stop_requested? : Bool
+      @@stop_requested.get == 1_u8
     end
 
     def self.start(queues : Array(String)? = nil)
@@ -18,40 +22,44 @@ module TJLavin
       max_backoff = TJLavin.configuration.reconnect_backoff_max
 
       loop do
-        break if @@stop_requested
+        break if stop_requested?
 
         begin
           run_once(queue_names)
           backoff = TJLavin.configuration.reconnect_backoff
-        rescue ex
+        rescue ex : IO::Error | OpenSSL::Error | AMQP::Client::Error
           Log.error(exception: ex) do
             "TJLavin connection error; reconnecting in #{backoff.total_seconds.to_i}s"
           end
         end
 
-        break if @@stop_requested
+        break if stop_requested?
 
         sleep backoff
         backoff = backoff * 2
         backoff = max_backoff if backoff > max_backoff
       end
     ensure
-      @@stop_requested = false
+      @@stop_requested.set(0_u8)
     end
 
     private def self.run_once(queue_names : Array(String))
-      shutdown = ::Channel(Nil).new(1)
+      # Closing this channel is the universal "the connection is gone, stop
+      # waiting" signal. `Channel#close` is idempotent and non-blocking, so
+      # multiple signal sources (server-side close, channel close, watchdog)
+      # can race without deadlocking on a full buffer.
+      shutdown = ::Channel(Nil).new
 
       AMQP::Client.start(TJLavin.connection_url) do |c|
         c.on_close do |code, reason|
           Log.warn { "AMQP connection closed by server (#{code}): #{reason}" }
-          shutdown.send(nil) rescue nil
+          shutdown.close rescue nil
         end
 
         c.channel do |ch|
           ch.on_close do |code, reason|
             Log.warn { "AMQP channel closed by server (#{code}): #{reason}" }
-            shutdown.send(nil) rescue nil
+            shutdown.close rescue nil
           end
 
           ch.prefetch(count: 1)
@@ -67,13 +75,13 @@ module TJLavin
           # `on_close`. Without this the main fiber would park forever on a
           # dead connection.
           spawn name: "tjlavin-watchdog" do
-            until c.closed? || ch.closed? || @@stop_requested
+            until c.closed? || ch.closed? || stop_requested?
               sleep 1.second
             end
-            shutdown.send(nil) rescue nil
+            shutdown.close rescue nil
           end
 
-          shutdown.receive
+          shutdown.receive rescue nil
         end
       end
     end
