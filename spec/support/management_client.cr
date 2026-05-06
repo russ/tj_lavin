@@ -9,6 +9,8 @@ require "uri"
 module ManagementClient
   extend self
 
+  @@client : HTTP::Client?
+
   def list_connections : Array(JSON::Any)
     response = client.get("/api/connections", headers: auth_headers)
     raise "list_connections failed: #{response.status_code} #{response.body}" unless response.success?
@@ -26,7 +28,7 @@ module ManagementClient
   end
 
   private def client : HTTP::Client
-    HTTP::Client.new(api_host, api_port)
+    @@client ||= HTTP::Client.new(api_host, api_port)
   end
 
   private def auth_headers : HTTP::Headers

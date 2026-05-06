@@ -33,9 +33,7 @@ module TJLavin
           end
         end
 
-        break if stop_requested?
-
-        sleep backoff
+        interruptible_sleep(backoff)
         backoff = backoff * 2
         backoff = max_backoff if backoff > max_backoff
       end
@@ -43,11 +41,27 @@ module TJLavin
       @@stop_requested.set(0_u8)
     end
 
+    # Sleep that returns early if `Runner.stop` is called. Polls in 1s
+    # increments so the longest reconnect backoff still tears down within
+    # ~1s of a stop request — important for test cleanup and graceful
+    # shutdown.
+    private def self.interruptible_sleep(duration : Time::Span) : Nil
+      return if duration <= 0.seconds
+      deadline = Time.monotonic + duration
+      loop do
+        return if stop_requested?
+        remaining = deadline - Time.monotonic
+        return if remaining <= 0.seconds
+        step = remaining > 1.second ? 1.second : remaining
+        sleep step
+      end
+    end
+
     private def self.run_once(queue_names : Array(String))
-      # Closing this channel is the universal "the connection is gone, stop
-      # waiting" signal. `Channel#close` is idempotent and non-blocking, so
-      # multiple signal sources (server-side close, channel close, watchdog)
-      # can race without deadlocking on a full buffer.
+      # Multiple sources race to signal shutdown (server-side connection
+      # close, channel close, watchdog). `Channel#close` is idempotent and
+      # non-blocking, so they can all fire without parking each other —
+      # `send` would block once a receiver picked up the first value.
       shutdown = ::Channel(Nil).new
 
       AMQP::Client.start(TJLavin.connection_url) do |c|
