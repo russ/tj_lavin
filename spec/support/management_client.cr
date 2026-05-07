@@ -9,26 +9,41 @@ require "uri"
 module ManagementClient
   extend self
 
-  @@client : HTTP::Client?
-
   def list_connections : Array(JSON::Any)
-    response = client.get("/api/connections", headers: auth_headers)
-    raise "list_connections failed: #{response.status_code} #{response.body}" unless response.success?
-    JSON.parse(response.body).as_a
+    with_client do |c|
+      fetch_connections(c)
+    end
   end
 
   def close_all_connections : Int32
-    closed = 0
-    list_connections.each do |conn|
-      name = conn["name"].as_s
-      response = client.delete("/api/connections/#{URI.encode_path_segment(name)}", headers: auth_headers)
-      closed += 1 if response.success?
+    with_client do |c|
+      closed = 0
+      fetch_connections(c).each do |conn|
+        name = conn["name"].as_s
+        response = c.delete("/api/connections/#{URI.encode_path_segment(name)}", headers: auth_headers)
+        closed += 1 if response.success?
+      end
+      closed
     end
-    closed
   end
 
-  private def client : HTTP::Client
-    @@client ||= HTTP::Client.new(api_host, api_port)
+  # `HTTP::Client` is not fiber-safe and HTTPS variants hold an OpenSSL
+  # context for their lifetime, so we never memoize. One client per
+  # public call, closed via `ensure`.
+  # See https://github.com/crystal-lang/crystal/issues/12412.
+  private def with_client(& : HTTP::Client -> T) : T forall T
+    c = HTTP::Client.new(api_host, api_port)
+    begin
+      yield c
+    ensure
+      c.close
+    end
+  end
+
+  private def fetch_connections(c : HTTP::Client) : Array(JSON::Any)
+    response = c.get("/api/connections", headers: auth_headers)
+    raise "list_connections failed: #{response.status_code} #{response.body}" unless response.success?
+    JSON.parse(response.body).as_a
   end
 
   private def auth_headers : HTTP::Headers
