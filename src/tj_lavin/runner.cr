@@ -114,10 +114,14 @@ module TJLavin
 
     private def self.handle_message(ch, msg) : Nil
       body = msg.body_io.to_s
-      Log.notice { "Received: #{body}" }
+      Log.debug { "Received: #{body}" }
 
       message = JSON.parse(body)
       job_class = message["class"].as_s
+      Log.with_context(class: job_class) do
+        msg.properties.message_id.try { |id| Log.context.set(message_id: id) }
+        Log.notice { "Received" }
+      end
 
       started_at = Time.monotonic
       job_run = JobRun.new(job_class)
