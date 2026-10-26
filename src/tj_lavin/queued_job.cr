@@ -54,7 +54,7 @@ module TJLavin
 
           @{{ name }} : {{ type }}?
 
-          def {{ name }}=(value : {{simplified_type}}) : {{simplified_type}}
+          def {{ name }}=(value : {{ simplified_type }}) : {{ simplified_type }}
             @{{ name }} = value
           end
 

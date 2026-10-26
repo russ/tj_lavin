@@ -1,0 +1,3 @@
+Naming/BlockParameterName:
+  # Defaults, plus amqp-client's own names for its client and channel blocks.
+  AllowedNames: [a, b, c, ch, e, i, j, k, v, x, y, k1, k2, v1, v2, db, ex, id, io, ip, op, tx, wg, ws]
