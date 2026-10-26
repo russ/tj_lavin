@@ -1,4 +1,5 @@
 require "./spec_helper"
+require "log/spec"
 
 describe TJLavin::Runner do
   describe ".start with reconnection" do
@@ -37,6 +38,37 @@ describe TJLavin::Runner do
     ensure
       ReconnectWorkerHelper.callback = nil
       TJLavin::Runner.stop
+    end
+  end
+
+  describe "Received log line" do
+    it "names the job class and keeps the body at debug" do
+      purge_queue("spec_reconnect")
+
+      received = ::Channel(String).new(1)
+      ReconnectWorkerHelper.callback = ->(name : String) {
+        received.send(name) rescue nil
+        nil
+      }
+
+      Log.capture("tj_lavin") do |logs|
+        spawn name: "tjlavin-runner-received-spec" do
+          TJLavin::Runner.start(["spec_reconnect"])
+        end
+        sleep 1.second
+
+        ReconnectWorkerHelper::ReconnectWorker.new(name: "private-arg").enqueue
+        wait_for_job(received, 10.seconds).should eq("private-arg")
+        sleep 200.milliseconds
+
+        logs.check(:debug, /^Received: .*private-arg/)
+        notice = logs.check(:notice, "Received").entry
+        notice.context[:class]?.should eq("ReconnectWorkerHelper::ReconnectWorker")
+      end
+    ensure
+      ReconnectWorkerHelper.callback = nil
+      TJLavin::Runner.stop
+      sleep 1.5.seconds
     end
   end
 
