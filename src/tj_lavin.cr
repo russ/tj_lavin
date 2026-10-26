@@ -4,5 +4,5 @@ require "amqp-client"
 require "./tj_lavin/*"
 
 module TJLavin
-  VERSION = "0.4.0"
+  VERSION = "0.4.1"
 end
