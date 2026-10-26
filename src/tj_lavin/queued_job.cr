@@ -164,9 +164,12 @@ module TJLavin
               )
             end
 
+            headers = delay > 0 ? AMQ::Protocol::Table.new({"x-delay" => delay}) : AMQ::Protocol::Table.new
+            LogContext.capture.each { |name, value| headers[name] = value }
+
             props = AMQ::Protocol::Properties.new(
               priority: priority.to_u8,
-              headers: delay > 0 ? AMQ::Protocol::Table.new({"x-delay" => delay}) : AMQ::Protocol::Table.new
+              headers: headers
             )
 
             ch.basic_publish(

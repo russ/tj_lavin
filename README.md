@@ -45,8 +45,16 @@ TJLavin.configure do |settings|
   settings.routing_key = ENV["AMQP_ROUTING_KEY"]? # defaults to "tjlavin"
   settings.default_exchange = ENV["AMQP_DEFAULT_EXCHANGE"]? # defaults to ""
   settings.delayed_exchange = ENV["AMQP_DELAYED_EXCHANGE"]? # defaults to "tjlavin.delayed"
+  settings.propagate_log_context = [:request_id] # defaults to []
 end
 ```
+
+`propagate_log_context` lists `Log.context` keys to carry from the code that
+enqueues a job to the worker that runs it. Each value present at enqueue is sent
+as an `x-tjlavin-log-<key>` AMQP header, and the runner restores it around the
+whole job, including its `Received`, `Done` and `Failed` lines. A job enqueued
+while another job runs inherits the values. Messages without the headers run
+exactly as before.
 
 ### Creating a Job
 

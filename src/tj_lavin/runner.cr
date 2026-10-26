@@ -106,33 +106,39 @@ module TJLavin
       Log.notice { "Subscribing to queue: #{queue_name}" }
 
       q.subscribe(no_ack: false, block: false) do |msg|
-        body = msg.body_io.to_s
-        Log.notice { "Received: #{body}" }
-
-        message = JSON.parse(body)
-        job_class = message["class"].as_s
-
-        started_at = Time.monotonic
-        job_run = JobRun.new(job_class)
-        job_run.config = array_to_hash(message["args"].as_a.map(&.as_s))
-        job_instance = job_run.run
-        duration_ms = (Time.monotonic - started_at).total_milliseconds.to_i64
-
-        if job_instance.exception
-          ch.basic_reject(msg.delivery_tag, requeue: false)
-          Log.with_context(class: job_class, duration_ms: duration_ms) do
-            Log.notice { "Failed" }
-          end
-        else
-          ch.basic_ack(msg.delivery_tag)
-          Log.with_context(class: job_class, duration_ms: duration_ms) do
-            Log.notice { "Done" }
-          end
+        LogContext.with_restored(msg.properties.headers) do
+          handle_message(ch, msg)
         end
-      rescue e
-        Log.notice { "Error: #{e.message}".colorize(:red) }
-        ch.basic_reject(msg.delivery_tag, requeue: false) rescue nil
       end
+    end
+
+    private def self.handle_message(ch, msg) : Nil
+      body = msg.body_io.to_s
+      Log.notice { "Received: #{body}" }
+
+      message = JSON.parse(body)
+      job_class = message["class"].as_s
+
+      started_at = Time.monotonic
+      job_run = JobRun.new(job_class)
+      job_run.config = array_to_hash(message["args"].as_a.map(&.as_s))
+      job_instance = job_run.run
+      duration_ms = (Time.monotonic - started_at).total_milliseconds.to_i64
+
+      if job_instance.exception
+        ch.basic_reject(msg.delivery_tag, requeue: false)
+        Log.with_context(class: job_class, duration_ms: duration_ms) do
+          Log.notice { "Failed" }
+        end
+      else
+        ch.basic_ack(msg.delivery_tag)
+        Log.with_context(class: job_class, duration_ms: duration_ms) do
+          Log.notice { "Done" }
+        end
+      end
+    rescue e
+      Log.notice { "Error: #{e.message}".colorize(:red) }
+      ch.basic_reject(msg.delivery_tag, requeue: false) rescue nil
     end
 
     private def self.array_to_hash(array : Array(String)) : Hash(String, String)

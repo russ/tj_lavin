@@ -21,6 +21,14 @@ module TJLavin
     property reconnect_backoff : Time::Span = 1.second
     property reconnect_backoff_max : Time::Span = 30.seconds
 
+    # `Log.context` keys carried from the enqueuing fiber to the job. Each
+    # value present at enqueue travels as an AMQP header, and the runner
+    # restores it around the whole job, so a request's ID follows the job it
+    # queued. Empty by default, which sends no headers.
+    #
+    #   settings.propagate_log_context = [:request_id]
+    property propagate_log_context : Array(Symbol) = [] of Symbol
+
     property? validated = false
 
     def validate
