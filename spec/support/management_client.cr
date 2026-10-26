@@ -71,7 +71,7 @@ module ManagementClient
 
   private def amqp_uri : URI?
     raw = ENV["AMQP_URL"]?
-    return nil if raw.nil? || raw.empty?
+    return if raw.nil? || raw.empty?
     URI.parse(raw)
   end
 end

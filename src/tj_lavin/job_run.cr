@@ -4,10 +4,6 @@ module TJLavin
     getter job : QueuedJob?
     property config
 
-    def initialize(type : String)
-      new type
-    end
-
     def initialize(@type : String)
       @job = nil
       @config = {} of String => String

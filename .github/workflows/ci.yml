@@ -26,7 +26,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - run: shards install
-      - run: ./bin/ameba src/ spec/
+      - run: cd lib/ameba && shards build
+      - run: lib/ameba/bin/ameba src/ spec/
   
   spec:
     name: Spec

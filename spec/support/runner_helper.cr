@@ -28,8 +28,8 @@ def consume_jobs(*, queue : String = TJLavin.configuration.routing_key, count : 
           block.call(job_run)
 
           nil
-        rescue exc
-          exc
+        rescue ex
+          ex
         ensure
           ch.basic_ack(msg.delivery_tag)
         end
